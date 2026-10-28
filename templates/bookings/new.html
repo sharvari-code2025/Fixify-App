@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Book a Smartphone Repair — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding: 3rem 1.25rem;">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+        <span class="badge badge-booked" style="margin-bottom: 0.5rem;">Instant Service Request</span>
+        <h2>Book Your Mobile Repair</h2>
+        <p>Provide details about your device symptoms and select your preferred service mode.</p>
+    </div>
+
+    <div class="card" style="padding: 2.5rem 2rem;">
+        <form action="{{ url_for('bookings.create') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <h3 style="font-size: 1.15rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem; margin-bottom: 1.25rem;">
+                1. Device Identification
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                <div class="form-group">
+                    <label for="phone_brand" class="form-label">Phone Brand *</label>
+                    <input type="text" id="phone_brand" name="phone_brand" class="form-control" list="brands_list" placeholder="e.g. Apple, Samsung, OnePlus" value="{{ form.get('phone_brand', '') }}" required>
+                    <datalist id="brands_list">
+                        <option value="Apple">
+                        <option value="Samsung">
+                        <option value="Google Pixel">
+                        <option value="OnePlus">
+                        <option value="Xiaomi">
+                        <option value="Realme">
+                        <option value="Oppo">
+                        <option value="Vivo">
+                        <option value="Motorola">
+                        <option value="Nothing">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_model" class="form-label">Phone Model *</label>
+                    <input type="text" id="phone_model" name="phone_model" class="form-control" placeholder="e.g. iPhone 14 Pro, Galaxy S23" value="{{ form.get('phone_model', '') }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id" class="form-label">Primary Issue Category</label>
+                <select id="category_id" name="category_id" class="form-select">
+                    <option value="">-- Select Repair Category (Optional) --</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if form.get('category_id') == cat.id|string %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <span class="input-help">Select the primary symptom. Our technician will perform a full diagnostic.</span>
+            </div>
+
+            <h3 style="font-size: 1.15rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem; margin: 1.75rem 0 1.25rem;">
+                2. Problem Symptoms & Condition
+            </h3>
+
+            <div class="form-group">
+                <label for="problem_description" class="form-label">Describe the Problem in Detail *</label>
+                <textarea id="problem_description" name="problem_description" class="form-control" rows="3" placeholder="Explain what happened (e.g. screen flickers after drop, phone does not charge beyond 20%, speaker crackles)..." required minlength="10">{{ form.get('problem_description', '') }}</textarea>
+                <span class="input-help">At least 10 characters so our technicians have accurate context.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="device_condition" class="form-label">Current Physical Condition</label>
+                <input type="text" id="device_condition" name="device_condition" class="form-control" placeholder="e.g. Minor scratches on back glass, original screen, no liquid exposure" value="{{ form.get('device_condition', '') }}">
+            </div>
+
+            <div class="form-group">
+                <label for="device_images" class="form-label">Upload Device Images (Optional)</label>
+                <input type="file" id="device_images" name="device_images" class="form-control" accept="image/png, image/jpeg, image/webp" multiple>
+                <span class="input-help">Upload photos of exterior cracks, damage, or screen anomalies (PNG, JPG, WebP max 16MB).</span>
+            </div>
+
+            <h3 style="font-size: 1.15rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem; margin: 1.75rem 0 1.25rem;">
+                3. Service Mode & Scheduling
+            </h3>
+
+            <div class="form-group">
+                <label class="form-label">Choose Service Method *</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.4rem;">
+                    <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; background: var(--bg-surface);">
+                        <input type="radio" name="service_type" value="walk_in" {% if form.get('service_type', 'walk_in') == 'walk_in' %}checked{% endif %} style="margin-top: 4px;">
+                        <div>
+                            <strong style="display: block; color: var(--text-primary);">🏬 Walk-In Service</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Bring device directly to Fixify service hub.</span>
+                        </div>
+                    </label>
+
+                    <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; background: var(--bg-surface);">
+                        <input type="radio" name="service_type" value="pickup_delivery" {% if form.get('service_type') == 'pickup_delivery' %}checked{% endif %} style="margin-top: 4px;">
+                        <div>
+                            <strong style="display: block; color: var(--text-primary);">🚚 Doorstep Pickup & Return</strong>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Delivery staff collects and returns device.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" id="pickup-address-container" style="display: none;">
+                <label for="pickup_address" class="form-label">Complete Pickup & Delivery Address *</label>
+                <textarea id="pickup_address" name="pickup_address" class="form-control" rows="2" placeholder="House/Flat No., Street, Landmark, City, PIN Code">{{ form.get('pickup_address', '') }}</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                <div class="form-group">
+                    <label for="preferred_date" class="form-label">Preferred Service Date</label>
+                    <input type="date" id="preferred_date" name="preferred_date" class="form-control" value="{{ form.get('preferred_date', '') }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="additional_notes" class="form-label">Special Instructions</label>
+                    <input type="text" id="additional_notes" name="additional_notes" class="form-control" placeholder="e.g. Call before arrival, device has SIM removed" value="{{ form.get('additional_notes', '') }}">
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-lg btn-primary" style="width: 100%;">
+                    Submit Repair Booking & Generate Tracking Code
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

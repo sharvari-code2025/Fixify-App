@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding: 3rem 1.25rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+        <div>
+            <h2>Notification Inbox</h2>
+            <p>Real-time updates regarding your repair stages, technician diagnoses, and delivery events</p>
+        </div>
+        {% if notifications %}
+        <form action="{{ url_for('read_all_notifications') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-secondary">
+                ✓ Mark All as Read
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if notifications %}
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+            {% for n in notifications %}
+            <div class="card" style="padding: 1.15rem 1.35rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; {% if not n.is_read %}border-left: 4px solid var(--accent-primary); background: var(--bg-card-hover);{% endif %}">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                        <span style="font-weight: 700; color: var(--text-primary); font-size: 0.95rem;">{{ n.title }}</span>
+                        {% if not n.is_read %}
+                            <span class="badge badge-booked" style="font-size: 0.65rem;">NEW</span>
+                        {% endif %}
+                    </div>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">{{ n.message }}</p>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">{{ n.created_at }}</span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                    {% if n.link %}
+                        <a href="{{ n.link }}" class="btn btn-sm btn-primary">View</a>
+                    {% endif %}
+                    {% if not n.is_read %}
+                        <form action="{{ url_for('read_notification', nid=n.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-secondary" title="Mark as read">✓</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🔔</div>
+            <h3 style="margin-bottom: 0.4rem;">No Notifications Yet</h3>
+            <p>You're completely up to date! System alerts regarding your repairs will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Logistics Console — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1250px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="badge badge-role-delivery" style="margin-bottom: 0.4rem;">Logistics & Courier Specialist</span>
+            <h2>Doorstep Delivery Console</h2>
+            <p>Manage customer device pickups, return deliveries, and update route progress in real-time.</p>
+        </div>
+    </div>
+
+    <!-- Delivery Metrics Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div>
+                <div class="stat-val">{{ total_tasks }}</div>
+                <div class="stat-label">Total Assigned Tasks</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #0ea5e9; background: rgba(14, 165, 233, 0.15);">🏬</div>
+            <div>
+                <div class="stat-val" style="color: #38bdf8;">{{ pending_pickups }}</div>
+                <div class="stat-label">Pending Pickups</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.15);">🚚</div>
+            <div>
+                <div class="stat-val" style="color: #fbbf24;">{{ pending_deliveries }}</div>
+                <div class="stat-label">Pending Deliveries</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);">✅</div>
+            <div>
+                <div class="stat-val" style="color: #34d399;">{{ completed_tasks }}</div>
+                <div class="stat-label">Completed Tasks</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Tasks Queue -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Active Pickup & Delivery Tasks</h3>
+            <a href="{{ url_for('delivery.tasks') }}" class="btn btn-sm btn-secondary">View All Tasks &rarr;</a>
+        </div>
+
+        {% if active_tasks %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Task Type</th>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Task Status</th>
+                            <th>Update Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in active_tasks %}
+                        <tr>
+                            <td>
+                                {% if t.task_type == 'pickup' %}
+                                    <span class="badge badge-booked">📥 PICKUP</span>
+                                {% else %}
+                                    <span class="badge badge-out-for-delivery">📤 RETURN</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ t.reference }}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">{{ t.phone_brand }} {{ t.phone_model }}</span>
+                            </td>
+                            <td>{{ t.customer_name }}</td>
+                            <td><a href="tel:{{ t.customer_mobile }}">{{ t.customer_mobile }}</a></td>
+                            <td style="font-size: 0.85rem; max-width: 250px;">{{ t.address }}</td>
+                            <td>
+                                <span class="badge badge-{{ t.status.lower().replace(' ', '-') }}">{{ t.status }}</span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('delivery.update_task', task_id=t.id) }}" method="POST" style="display: flex; gap: 0.4rem; align-items: center;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    
+                                    {% if t.task_type == 'pickup' %}
+                                        <button type="submit" name="status" value="Completed" class="btn btn-sm btn-success" title="Mark device received from customer">
+                                            ✓ Picked Up
+                                        </button>
+                                        <button type="submit" name="status" value="Failed" class="btn btn-sm btn-danger" title="Customer unavailable">
+                                            ✕ Failed
+                                        </button>
+                                    {% else %}
+                                        {% if t.status == 'Assigned' %}
+                                            <button type="submit" name="status" value="In Transit" class="btn btn-sm btn-primary">
+                                                🚀 Out for Delivery
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" name="status" value="Completed" class="btn btn-sm btn-success">
+                                                ✓ Delivered
+                                            </button>
+                                            <button type="submit" name="status" value="Failed" class="btn btn-sm btn-danger">
+                                                ✕ Failed
+                                            </button>
+                                        {% endif %}
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No active logistics tasks assigned to you right now.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

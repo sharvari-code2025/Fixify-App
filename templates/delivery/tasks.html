@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Logistics Tasks — Delivery — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1250px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Assigned Pickup & Delivery Tasks</h2>
+            <p>Archive of all assigned customer routes, pickup timestamps, and proof of delivery notes.</p>
+        </div>
+    </div>
+
+    <!-- Filters Toolbar -->
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <form action="{{ url_for('delivery.tasks') }}" method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 160px;">
+                <select name="type" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Task Types</option>
+                    <option value="pickup" {% if current_type == 'pickup' %}selected{% endif %}>Pickups</option>
+                    <option value="delivery" {% if current_type == 'delivery' %}selected{% endif %}>Deliveries</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Assigned" {% if current_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                    <option value="In Transit" {% if current_status == 'In Transit' %}selected{% endif %}>In Transit</option>
+                    <option value="Completed" {% if current_status == 'Completed' %}selected{% endif %}>Completed</option>
+                    <option value="Failed" {% if current_status == 'Failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            {% if current_type or current_status %}
+                <a href="{{ url_for('delivery.tasks') }}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Tasks List Table -->
+    <div class="card">
+        {% if tasks %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Task Type</th>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tasks %}
+                        <tr>
+                            <td>
+                                {% if t.task_type == 'pickup' %}
+                                    <span class="badge badge-booked">Pickup</span>
+                                {% else %}
+                                    <span class="badge badge-out-for-delivery">Delivery</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ t.reference }}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">{{ t.phone_brand }} {{ t.phone_model }}</span>
+                            </td>
+                            <td>{{ t.customer_name }}</td>
+                            <td><a href="tel:{{ t.customer_mobile }}">{{ t.customer_mobile }}</a></td>
+                            <td style="font-size: 0.85rem; max-width: 200px;">{{ t.address }}</td>
+                            <td>
+                                <span class="badge badge-{{ t.status.lower().replace(' ', '-') }}">{{ t.status }}</span>
+                            </td>
+                            <td style="font-size: 0.8rem; color: var(--text-secondary);">{{ t.notes or '—' }}</td>
+                            <td style="font-size: 0.8rem;">{{ t.created_at[:10] }}</td>
+                            <td>
+                                {% if t.status in ('Assigned', 'In Transit') %}
+                                    <form action="{{ url_for('delivery.update_task', task_id=t.id) }}" method="POST" style="display: flex; gap: 0.3rem;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% if t.task_type == 'pickup' %}
+                                            <button type="submit" name="status" value="Completed" class="btn btn-sm btn-success">✓ Picked Up</button>
+                                        {% else %}
+                                            {% if t.status == 'Assigned' %}
+                                                <button type="submit" name="status" value="In Transit" class="btn btn-sm btn-primary">🚀 Transit</button>
+                                            {% else %}
+                                                <button type="submit" name="status" value="Completed" class="btn btn-sm btn-success">✓ Delivered</button>
+                                            {% endif %}
+                                        {% endif %}
+                                    </form>
+                                {% else %}
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Resolved</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No delivery tasks found matching current filters.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

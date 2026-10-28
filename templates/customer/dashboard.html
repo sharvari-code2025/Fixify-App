@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1.25rem;">
+    <!-- Welcome Header & Quick Action -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="badge badge-booked" style="margin-bottom: 0.4rem;">Customer Portal</span>
+            <h2>Welcome back, {{ session.get('user_name') }}!</h2>
+            <p>Monitor your active smartphone repairs, approve cost estimates, and track deliveries.</p>
+        </div>
+        <a href="{{ url_for('bookings.create') }}" class="btn btn-primary">
+            + Book a New Repair
+        </a>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📱</div>
+            <div>
+                <div class="stat-val">{{ total_bookings }}</div>
+                <div class="stat-label">Total Bookings</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⚙️</div>
+            <div>
+                <div class="stat-val">{{ active_repairs }}</div>
+                <div class="stat-label">Active Repairs</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.15);">⏳</div>
+            <div>
+                <div class="stat-val" style="color: #fbbf24;">{{ pending_approvals }}</div>
+                <div class="stat-label">Pending Your Approval</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);">✅</div>
+            <div>
+                <div class="stat-val">{{ completed_repairs }}</div>
+                <div class="stat-label">Completed Repairs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Action Alert Banner (if approvals pending) -->
+    {% if pending_approvals > 0 %}
+        <div class="alert alert-warning" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; margin-bottom: 2rem;">
+            <div>
+                <strong>Action Required:</strong> You have {{ pending_approvals }} repair estimate(s) waiting for your approval. Repairs will not proceed without your consent.
+            </div>
+            <a href="{{ url_for('customer.my_bookings', status='Waiting for Approval') }}" class="btn btn-sm btn-primary">Review Estimates</a>
+        </div>
+    {% endif %}
+
+    <!-- Recent Bookings Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Repairs</h3>
+            <a href="{{ url_for('customer.my_bookings') }}" class="btn btn-sm btn-secondary">View All Repairs &rarr;</a>
+        </div>
+
+        {% if recent_bookings %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Device</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Estimate</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in recent_bookings %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('customer.booking_detail', booking_id=b.id) }}" style="font-weight: 700;">
+                                    {{ b.reference }}
+                                </a>
+                            </td>
+                            <td>{{ b.phone_brand }} {{ b.phone_model }}</td>
+                            <td>{{ b.category_name or 'General' }}</td>
+                            <td>
+                                <span class="badge badge-{{ b.status.lower().replace(' ', '-') }}">
+                                    {{ b.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if b.total_cost %}
+                                    <strong>₹{{ "%.2f"|format(b.total_cost) }}</strong>
+                                    {% if b.estimate_status == 'Pending' %}
+                                        <span class="badge badge-diagnosis" style="font-size: 0.65rem;">Needs Approval</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color: var(--text-muted);">In Diagnosis</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('customer.booking_detail', booking_id=b.id) }}" class="btn btn-sm btn-secondary">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p style="margin-bottom: 1rem;">You don't have any repair bookings yet.</p>
+                <a href="{{ url_for('bookings.create') }}" class="btn btn-primary">+ Book Your First Repair</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

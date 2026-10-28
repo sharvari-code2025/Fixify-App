@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Spare Parts & Inventory Management — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1350px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Spare Parts & Inventory</h2>
+            <p>Maintain warehouse stock, track replenishment orders, and prevent parts shortages.</p>
+        </div>
+    </div>
+
+    <!-- 2 Column: Add Part Form & Adjust Stock Form -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Add New SKU Form -->
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: 1.25rem;">Register New Spare Part</h3>
+            <form action="{{ url_for('admin.inventory') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="add_item">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="part_name" class="form-label">Part Name *</label>
+                        <input type="text" id="part_name" name="part_name" class="form-control" placeholder="e.g. iPhone 14 OLED Screen" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sku" class="form-label">SKU Code *</label>
+                        <input type="text" id="sku" name="sku" class="form-control" placeholder="e.g. SCR-IP14-OLED" required style="text-transform: uppercase;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" id="category" name="category" class="form-control" placeholder="Screens, Batteries">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock_quantity" class="form-label">Initial Stock *</label>
+                        <input type="number" id="stock_quantity" name="stock_quantity" class="form-control" value="10" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="min_stock_threshold" class="form-label">Min Threshold *</label>
+                        <input type="number" id="min_stock_threshold" name="min_stock_threshold" class="form-control" value="5" min="1" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="unit_cost" class="form-label">Unit Cost (₹) *</label>
+                        <input type="number" id="unit_cost" name="unit_cost" class="form-control" value="1500" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="supplier" class="form-label">Supplier Information</label>
+                        <input type="text" id="supplier" name="supplier" class="form-control" placeholder="e.g. Apex Electronics Ltd">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Save Spare Part
+                </button>
+            </form>
+        </div>
+
+        <!-- Stock Adjustment Form (In / Out) -->
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: 1.25rem;">Stock Inflow / Outflow Adjustment</h3>
+            <p style="font-size: 0.85rem; margin-bottom: 1rem;">Adjust physical quantities with transactional audit logging.</p>
+            <form action="{{ url_for('admin.inventory') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="adjust_stock">
+
+                <div class="form-group">
+                    <label for="item_id" class="form-label">Select Part *</label>
+                    <select id="item_id" name="item_id" class="form-select" required>
+                        <option value="">-- Choose Inventory Item --</option>
+                        {% for it in items %}
+                            <option value="{{ it.id }}">{{ it.part_name }} (Current Stock: {{ it.stock_quantity }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="movement_type" class="form-label">Movement Type *</label>
+                        <select id="movement_type" name="movement_type" class="form-select" required>
+                            <option value="in">Stock In (Restock / Supplier Intake)</option>
+                            <option value="out">Stock Out (Used in Repair / Damaged)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity" class="form-label">Quantity *</label>
+                        <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason" class="form-label">Adjustment Reason *</label>
+                    <input type="text" id="reason" name="reason" class="form-control" placeholder="e.g. Restocked batch PO-8902 or consumed in repair" required>
+                </div>
+
+                <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                    Post Inventory Movement
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inventory Listing Table -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 class="card-title" style="margin-bottom: 1.25rem;">Current Stock Levels</h3>
+        {% if items %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Part Name</th>
+                            <th>SKU</th>
+                            <th>Category</th>
+                            <th>In Stock</th>
+                            <th>Min Alert</th>
+                            <th>Unit Cost</th>
+                            <th>Supplier</th>
+                            <th>Stock Health</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for it in items %}
+                        <tr>
+                            <td><strong>{{ it.part_name }}</strong></td>
+                            <td><code>{{ it.sku }}</code></td>
+                            <td>{{ it.category or 'General' }}</td>
+                            <td><strong style="font-size: 1.1rem;">{{ it.stock_quantity }}</strong></td>
+                            <td>{{ it.min_stock_threshold }}</td>
+                            <td>₹{{ "%.2f"|format(it.unit_cost) }}</td>
+                            <td>{{ it.supplier or '—' }}</td>
+                            <td>
+                                {% if it.stock_quantity <= 0 %}
+                                    <span class="badge badge-cancelled">Out of Stock</span>
+                                {% elif it.stock_quantity <= it.min_stock_threshold %}
+                                    <span class="badge badge-diagnosis">Low Stock Alert</span>
+                                {% else %}
+                                    <span class="badge badge-completed">Healthy</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="padding: 2rem; text-align: center; color: var(--text-muted);">No inventory parts recorded yet. Register your first item above.</p>
+        {% endif %}
+    </div>
+
+    <!-- Inventory Movement Audit Log -->
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom: 1.25rem;">Recent Inventory Transactions</h3>
+        {% if movements %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Part</th>
+                            <th>Movement</th>
+                            <th>Quantity</th>
+                            <th>Reason</th>
+                            <th>Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in movements %}
+                        <tr>
+                            <td>{{ m.created_at }}</td>
+                            <td><strong>{{ m.part_name }}</strong> ({{ m.sku }})</td>
+                            <td>
+                                {% if m.movement_type == 'in' %}
+                                    <span class="badge badge-completed">↑ INFLOW</span>
+                                {% else %}
+                                    <span class="badge badge-diagnosis">↓ OUTFLOW</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ m.quantity }}</strong></td>
+                            <td>{{ m.reason }}</td>
+                            <td>{{ m.staff_name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="padding: 2rem; text-align: center; color: var(--text-muted);">No stock movements recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}User & Staff Directory — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1350px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Staff & User Accounts</h2>
+            <p>Manage customer accounts, assign operational roles, and maintain workforce active status.</p>
+        </div>
+        <a href="{{ url_for('admin.create_staff') }}" class="btn btn-primary">
+            + Create Staff Account
+        </a>
+    </div>
+
+    <!-- Filters Toolbar -->
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <form action="{{ url_for('admin.users') }}" method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 220px;">
+                <input type="text" name="q" class="form-control" placeholder="Search name, email, or mobile..." value="{{ search or '' }}">
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <select name="role" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Roles</option>
+                    <option value="customer" {% if current_role == 'customer' %}selected{% endif %}>Customer</option>
+                    <option value="technician" {% if current_role == 'technician' %}selected{% endif %}>Technician</option>
+                    <option value="delivery" {% if current_role == 'delivery' %}selected{% endif %}>Delivery</option>
+                    <option value="admin" {% if current_role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            {% if search or current_role %}
+                <a href="{{ url_for('admin.users') }}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Registered</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>#{{ u.id }}</td>
+                        <td><strong>{{ u.full_name }}</strong></td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.mobile }}</td>
+                        <td>
+                            <span class="badge badge-role-{{ u.role }}">{{ u.role }}</span>
+                        </td>
+                        <td>
+                            {% if u.is_active == 1 %}
+                                <span class="badge badge-completed">Active</span>
+                            {% else %}
+                                <span class="badge badge-cancelled">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.created_at[:10] }}</td>
+                        <td>
+                            {% if u.id != session.get('user_id') %}
+                                <form action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}" method="POST" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm {% if u.is_active == 1 %}btn-danger{% else %}btn-success{% endif %}" onclick="return confirm('Toggle active status for {{ u.full_name }}?')">
+                                        {% if u.is_active == 1 %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">Current User</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Settle Repair Invoice — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px; padding: 3rem 1.25rem;">
+    <div style="margin-bottom: 2rem; text-align: center;">
+        <span class="badge badge-completed" style="margin-bottom: 0.5rem;">Secure Digital Invoice</span>
+        <h2>Settle Repair Invoice</h2>
+        <p>Review charges and simulate invoice settlement for repair <strong>{{ booking.reference }}</strong>.</p>
+    </div>
+
+    <!-- Safe Demo Payment Alert Callout -->
+    <div style="background: rgba(14, 165, 233, 0.12); border: 1px solid var(--border-accent); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+            <div style="font-size: 1.5rem;">🛡️</div>
+            <div>
+                <strong style="color: var(--accent-primary); display: block; margin-bottom: 0.25rem;">
+                    Demonstration Payment Simulation Mode
+                </strong>
+                <p style="font-size: 0.85rem; margin: 0; color: var(--text-secondary);">
+                    This is a secure academic/commercial evaluation sandbox. No real card numbers, banking PINs, or actual monetary transactions are executed. Transaction references are securely audited in the SQLite database.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 2.25rem 2rem;">
+        <!-- Invoice Breakdown Table -->
+        <h3 class="card-title" style="margin-bottom: 1rem;">Invoice Breakdown</h3>
+        <div style="background: var(--bg-surface); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Device & Issue:</span>
+                <strong>{{ booking.phone_brand }} {{ booking.phone_model }} ({{ booking.category_name or 'Repair' }})</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Parts Replacement:</span>
+                <strong>₹{{ "%.2f"|format(estimate.parts_cost if estimate else 0.0) }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Labour & Service:</span>
+                <strong>₹{{ "%.2f"|format(estimate.labour_cost if estimate else 0.0) }}</strong>
+            </div>
+            {% if estimate and estimate.additional_charges > 0 %}
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Additional Diagnostics:</span>
+                <strong>₹{{ "%.2f"|format(estimate.additional_charges) }}</strong>
+            </div>
+            {% endif %}
+            
+            <div style="border-top: 1px solid var(--border-subtle); margin-top: 0.75rem; padding-top: 0.75rem; display: flex; justify-content: space-between; font-size: 1.15rem;">
+                <span>Total Amount Due:</span>
+                <strong style="color: var(--accent-primary);">₹{{ "%.2f"|format(balance_due) }}</strong>
+            </div>
+        </div>
+
+        {% if balance_due > 0 %}
+            <form action="{{ url_for('payments.checkout', booking_id=booking.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label class="form-label">Select Simulated Payment Method *</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+                        <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; text-align: center; cursor: pointer; background: var(--bg-surface);">
+                            <input type="radio" name="payment_method" value="demo_upi" checked style="margin-bottom: 0.35rem; display: block; margin: 0 auto 0.35rem;">
+                            <strong style="font-size: 0.85rem; display: block;">⚡ Demo UPI</strong>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">Instant QR Mock</span>
+                        </label>
+                        <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; text-align: center; cursor: pointer; background: var(--bg-surface);">
+                            <input type="radio" name="payment_method" value="demo_card" style="margin-bottom: 0.35rem; display: block; margin: 0 auto 0.35rem;">
+                            <strong style="font-size: 0.85rem; display: block;">💳 Demo Card</strong>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">Simulated Visa/MC</span>
+                        </label>
+                        <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; text-align: center; cursor: pointer; background: var(--bg-surface);">
+                            <input type="radio" name="payment_method" value="cash" style="margin-bottom: 0.35rem; display: block; margin: 0 auto 0.35rem;">
+                            <strong style="font-size: 0.85rem; display: block;">💵 Cash on Service</strong>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">Recorded by Staff</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="amount" class="form-label">Amount to Pay (INR) *</label>
+                    <input type="number" id="amount" name="amount" class="form-control" value="{{ balance_due }}" step="0.01" min="1" max="{{ balance_due }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes" class="form-label">Transaction Remarks (Optional)</label>
+                    <input type="text" id="notes" name="notes" class="form-control" placeholder="e.g. Paid upon doorstep verification">
+                </div>
+
+                <button type="submit" class="btn btn-lg btn-success" style="width: 100%; margin-top: 1rem;">
+                    Confirm Simulated Payment (₹{{ "%.2f"|format(balance_due) }})
+                </button>
+            </form>
+        {% else %}
+            <div style="text-align: center; padding: 1.5rem 0;">
+                <span class="badge badge-completed" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                    ✓ Invoice Fully Settled
+                </span>
+                <p style="margin-top: 1rem;">All required payments have been recorded for this repair booking.</p>
+                <a href="{{ url_for('customer.booking_detail', booking_id=booking.id) }}" class="btn btn-secondary">
+                    Return to Booking Details
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

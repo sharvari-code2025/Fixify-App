@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Create Customer Account — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 520px; padding: 3.5rem 1.25rem;">
+    <div class="card" style="padding: 2.25rem 2rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="brand-icon" style="margin: 0 auto 0.75rem;">⚡</div>
+            <h2 style="margin-bottom: 0.25rem;">Create Your Account</h2>
+            <p style="font-size: 0.9rem;">Join Fixify for instant repair bookings, live tracking, and digital approvals</p>
+            <span class="badge badge-booked" style="margin-top: 0.5rem;">Customer Account Portal</span>
+        </div>
+
+        <form action="{{ url_for('auth.register') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label for="full_name" class="form-label">Full Name</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" value="{{ full_name or '' }}" placeholder="e.g. Rahul Sharma" required autofocus minlength="2">
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ email or '' }}" placeholder="rahul@example.com" required>
+                <span class="input-help">Used for account notifications and invoice records.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="mobile" class="form-label">10-Digit Mobile Number</label>
+                <input type="tel" id="mobile" name="mobile" class="form-control" value="{{ mobile or '' }}" placeholder="9876543210" pattern="[6-9][0-9]{9}" required>
+                <span class="input-help">Required for repair status SMS and OTP logins.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Create Password</label>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required minlength="8">
+                    <button type="button" class="input-toggle-btn password-toggle-btn" data-target="password">Show</button>
+                </div>
+                <span class="input-help">At least 8 characters, including uppercase, lowercase, and a number.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <div class="input-group">
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="••••••••" required minlength="8">
+                    <button type="button" class="input-toggle-btn password-toggle-btn" data-target="confirm_password">Show</button>
+                </div>
+            </div>
+
+            <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.775rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                🛡️ <strong>Zero Guesswork Guarantee:</strong> Fixify never shares customer details. Technicians only inspect the hardware required for diagnostics.
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Create Customer Account
+            </button>
+        </form>
+
+        <div style="border-top: 1px solid var(--border-color); margin-top: 1.75rem; padding-top: 1.25rem; text-align: center; font-size: 0.875rem;">
+            Already have an account? <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign in here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Payments & Revenue Log — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1250px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Payments & Revenue Ledger</h2>
+            <p>Audited transaction records for all settled repairs and parts invoices.</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div class="card" style="padding: 0.6rem 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Collected</span>
+                    <strong style="display: block; font-size: 1.35rem; color: #10b981;">₹{{ "%.2f"|format(totals.total_collected or 0.0) }}</strong>
+                </div>
+            </div>
+            <a href="{{ url_for('admin.export_payments_csv') }}" class="btn btn-secondary">
+                📥 Export Payments CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if payments %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Txn Reference</th>
+                            <th>Booking</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Recorded By</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payments %}
+                        <tr>
+                            <td><code>{{ p.reference_id }}</code></td>
+                            <td>
+                                <a href="{{ url_for('admin.booking_detail', booking_id=p.booking_id) }}" style="font-weight: 600;">
+                                    {{ p.reference }}
+                                </a>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">{{ p.phone_brand }} {{ p.phone_model }}</span>
+                            </td>
+                            <td>{{ p.customer_name }}</td>
+                            <td><strong style="font-size: 1.05rem;">₹{{ "%.2f"|format(p.amount) }}</strong></td>
+                            <td>{{ p.payment_method.replace('_', ' ') | title }}</td>
+                            <td>
+                                <span class="badge badge-completed">{{ p.payment_status }}</span>
+                            </td>
+                            <td>{{ p.recorded_by_name }}</td>
+                            <td>{{ p.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No payment transactions recorded yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

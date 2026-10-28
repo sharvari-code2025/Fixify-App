@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}All Repair Bookings — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1350px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Repair Bookings Directory</h2>
+            <p>Master registry of all customer smartphone repairs, technicians assigned, and fulfillment stages.</p>
+        </div>
+        <a href="{{ url_for('admin.export_bookings_csv') }}" class="btn btn-secondary">
+            📥 Export to CSV
+        </a>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <form action="{{ url_for('admin.bookings') }}" method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 220px;">
+                <input type="text" name="q" class="form-control" placeholder="Search reference, customer, brand, or model..." value="{{ search or '' }}">
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Booked" {% if current_status == 'Booked' %}selected{% endif %}>Booked</option>
+                    <option value="Assigned" {% if current_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                    <option value="Diagnosis" {% if current_status == 'Diagnosis' %}selected{% endif %}>Diagnosis</option>
+                    <option value="Waiting for Approval" {% if current_status == 'Waiting for Approval' %}selected{% endif %}>Waiting for Approval</option>
+                    <option value="In Progress" {% if current_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                    <option value="Ready for Pickup" {% if current_status == 'Ready for Pickup' %}selected{% endif %}>Ready for Pickup</option>
+                    <option value="Out for Delivery" {% if current_status == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+                    <option value="Completed" {% if current_status == 'Completed' %}selected{% endif %}>Completed</option>
+                    <option value="Cancelled" {% if current_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <select name="tech" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Technicians</option>
+                    {% for t in technicians %}
+                        <option value="{{ t.id }}" {% if current_tech == t.id|string %}selected{% endif %}>{{ t.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            {% if search or current_status or current_tech %}
+                <a href="{{ url_for('admin.bookings') }}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Master Bookings Table -->
+    <div class="card">
+        {% if bookings %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Device</th>
+                            <th>Category</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Technician</th>
+                            <th>Delivery Staff</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}" style="font-weight: 700;">
+                                    {{ b.reference }}
+                                </a>
+                            </td>
+                            <td>{{ b.customer_name }}</td>
+                            <td>{{ b.customer_mobile }}</td>
+                            <td>{{ b.phone_brand }} {{ b.phone_model }}</td>
+                            <td>{{ b.category_name or 'General' }}</td>
+                            <td>{{ b.service_type.replace('_', ' ') | title }}</td>
+                            <td>
+                                <span class="badge badge-{{ b.status.lower().replace(' ', '-') }}">
+                                    {{ b.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if b.technician_name %}
+                                    <span>{{ b.technician_name }}</span>
+                                {% else %}
+                                    <span class="badge badge-diagnosis" style="font-size: 0.7rem;">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if b.delivery_staff_name %}
+                                    <span>{{ b.delivery_staff_name }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}" class="btn btn-sm btn-secondary">
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No repair bookings found matching the filters.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

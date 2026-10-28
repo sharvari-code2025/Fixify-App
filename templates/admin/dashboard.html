@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Master Console — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1350px; padding: 2.5rem 1.25rem;">
+    <!-- Admin Header & Export Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="badge badge-role-admin" style="margin-bottom: 0.4rem;">Super Administrator</span>
+            <h2>Operations & Analytics Console</h2>
+            <p>Live metrics from the SQLite database monitoring the complete mobile repair ecosystem.</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{{ url_for('admin.export_bookings_csv') }}" class="btn btn-sm btn-secondary">
+                📥 Export Bookings CSV
+            </a>
+            <a href="{{ url_for('admin.export_payments_csv') }}" class="btn btn-sm btn-secondary">
+                📥 Export Payments CSV
+            </a>
+            <a href="{{ url_for('admin.create_staff') }}" class="btn btn-sm btn-primary">
+                + Add Staff Member
+            </a>
+        </div>
+    </div>
+
+    <!-- 10 Core Metrics Grid -->
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div>
+                <div class="stat-val">{{ total_customers }}</div>
+                <div class="stat-label">Total Customers</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">📱</div>
+            <div>
+                <div class="stat-val">{{ total_bookings }}</div>
+                <div class="stat-label">Total Bookings</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.15);">⏳</div>
+            <div>
+                <div class="stat-val" style="color: #fbbf24;">{{ pending_repairs }}</div>
+                <div class="stat-label">Pending Diagnosis</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #a855f7; background: rgba(168, 85, 247, 0.15);">⚙️</div>
+            <div>
+                <div class="stat-val" style="color: #c084fc;">{{ in_progress }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #0ea5e9; background: rgba(14, 165, 233, 0.15);">📦</div>
+            <div>
+                <div class="stat-val" style="color: #38bdf8;">{{ ready_for_pickup }}</div>
+                <div class="stat-label">Ready for Pickup</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #06b6d4; background: rgba(6, 182, 212, 0.15);">🚚</div>
+            <div>
+                <div class="stat-val" style="color: #22d3ee;">{{ out_for_delivery }}</div>
+                <div class="stat-label">Out for Delivery</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);">✅</div>
+            <div>
+                <div class="stat-val" style="color: #34d399;">{{ completed_repairs }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);">💰</div>
+            <div>
+                <div class="stat-val" style="color: #34d399; font-size: 1.4rem;">₹{{ "%.0f"|format(total_revenue) }}</div>
+                <div class="stat-label">Recorded Revenue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart & Workload Distribution Row -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Chart.js Real Database Doughnut Chart -->
+        <div class="card">
+            <h3 class="card-title">Repair Lifecycle Distribution</h3>
+            <p style="font-size: 0.85rem; margin-bottom: 1rem;">Real-time breakdown of current repair states from SQLite.</p>
+            <div style="height: 280px; position: relative;">
+                <canvas id="repairStatusChart" data-status-counts='{{ status_data | tojson }}'></canvas>
+            </div>
+        </div>
+
+        <!-- Staff Workload Monitoring -->
+        <div class="card">
+            <h3 class="card-title">Staff Workload Monitoring</h3>
+            
+            <h4 style="font-size: 0.95rem; margin: 0.75rem 0 0.5rem; color: var(--text-secondary);">Technicians Active Queue:</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;">
+                {% for t in tech_workload %}
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.5rem 0.85rem; border-radius: var(--radius-md); font-size: 0.875rem;">
+                    <div>
+                        <strong>{{ t.full_name }}</strong>
+                        <span style="color: var(--text-muted); font-size: 0.75rem; display: block;">ID #{{ t.id }} • Certified Tech</span>
+                    </div>
+                    <span class="badge {% if t.active_count > 3 %}badge-diagnosis{% else %}badge-booked{% endif %}">
+                        {{ t.active_count }} active repairs
+                    </span>
+                </div>
+                {% else %}
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">No active technicians found.</p>
+                {% endfor %}
+            </div>
+
+            <h4 style="font-size: 0.95rem; margin: 0.75rem 0 0.5rem; color: var(--text-secondary);">Delivery Personnel Queue:</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for d in delivery_workload %}
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.5rem 0.85rem; border-radius: var(--radius-md); font-size: 0.875rem;">
+                    <div>
+                        <strong>{{ d.full_name }}</strong>
+                        <span style="color: var(--text-muted); font-size: 0.75rem; display: block;">ID #{{ d.id }} • Logistics</span>
+                    </div>
+                    <span class="badge badge-booked">
+                        {{ d.active_tasks }} active tasks
+                    </span>
+                </div>
+                {% else %}
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">No active delivery personnel found.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings Operational Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Repair Operations</h3>
+            <a href="{{ url_for('admin.bookings') }}" class="btn btn-sm btn-secondary">View All Repairs &rarr;</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Device</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Technician</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in recent_bookings %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}" style="font-weight: 700;">
+                                {{ b.reference }}
+                            </a>
+                        </td>
+                        <td>{{ b.customer_name }}</td>
+                        <td>{{ b.phone_brand }} {{ b.phone_model }}</td>
+                        <td>{{ b.category_name or 'General' }}</td>
+                        <td>
+                            <span class="badge badge-{{ b.status.lower().replace(' ', '-') }}">
+                                {{ b.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if b.technician_name %}
+                                <span style="font-size: 0.85rem;">{{ b.technician_name }}</span>
+                            {% else %}
+                                <span class="badge badge-diagnosis" style="font-size: 0.7rem;">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}" class="btn btn-sm btn-secondary">
+                                Review & Assign
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

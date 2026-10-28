@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Technician Workbench: {{ booking.reference }} — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1250px; padding: 2.5rem 1.25rem;">
+    <!-- Top Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+            <a href="{{ url_for('technician.repairs') }}" style="font-size: 0.875rem;">&larr; Back to Assigned Queue</a>
+            <h2 style="margin-top: 0.25rem;">Repair Workbench: {{ booking.reference }}</h2>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="badge badge-{{ booking.status.lower().replace(' ', '-') }}" style="font-size: 0.95rem; padding: 0.4rem 0.9rem;">
+                {{ booking.status }}
+            </span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <div>
+            <!-- Device Hardware Inspection Card -->
+            <div class="card" style="margin-bottom: 1.75rem;">
+                <h3 class="card-title">Device Specifications & Customer Symptoms</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1rem;">
+                    <div><span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Smartphone:</span> <strong>{{ booking.phone_brand }} {{ booking.phone_model }}</strong></div>
+                    <div><span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Category:</span> <strong>{{ booking.category_name or 'General' }}</strong></div>
+                    <div><span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Customer:</span> <strong>{{ booking.customer_name }} ({{ booking.customer_mobile }})</strong></div>
+                    <div><span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Service Mode:</span> <strong>{{ booking.service_type.replace('_', ' ') | title }}</strong></div>
+                </div>
+
+                <div style="margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Customer Reported Symptoms:</span>
+                    <p style="margin-top: 0.25rem; color: var(--text-primary); font-size: 0.95rem;">{{ booking.problem_description }}</p>
+                </div>
+
+                {% if booking.device_condition %}
+                <div style="margin-top: 0.75rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Intake Condition Notes:</span>
+                    <p style="margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.9rem;">{{ booking.device_condition }}</p>
+                </div>
+                {% endif %}
+
+                {% if images %}
+                <div style="margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Intake Photos:</span>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        {% for img in images %}
+                        <a href="{{ url_for('static', filename='uploads/' + img.filename) }}" target="_blank">
+                            <img src="{{ url_for('static', filename='uploads/' + img.filename) }}" alt="Intake Photo" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Form 1: Technical Diagnosis Recording -->
+            <div class="card" style="margin-bottom: 1.75rem;">
+                <h3 class="card-title">1. Record Technical Diagnosis</h3>
+                <p style="font-size: 0.85rem; margin-bottom: 1.25rem;">Document component testing findings and root cause.</p>
+                <form action="{{ url_for('technician.submit_diagnosis', booking_id=booking.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="form-group">
+                        <label for="diagnosis_text" class="form-label">Diagnostic Findings *</label>
+                        <textarea id="diagnosis_text" name="diagnosis_text" class="form-control" rows="3" placeholder="e.g. Digitizer glass cracked, LCD panel intact. Battery health at 64% with swelling. Charging port pins oxidized." required>{{ diagnosis.diagnosis_text if diagnosis else '' }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="recommended_repair" class="form-label">Recommended Repair Action</label>
+                        <input type="text" id="recommended_repair" name="recommended_repair" class="form-control" placeholder="e.g. Replace OEM display assembly and battery module" value="{{ diagnosis.recommended_repair if diagnosis else '' }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary">
+                        Save Diagnosis Findings
+                    </button>
+                </form>
+            </div>
+
+            <!-- Form 2: Cost Estimation & Approval Request -->
+            <div class="card" style="margin-bottom: 1.75rem;">
+                <div class="card-header">
+                    <h3 class="card-title">2. Parts & Labour Cost Estimate</h3>
+                    {% if estimate %}
+                        <span class="badge badge-{% if estimate.approval_status == 'Approved' %}completed{% elif estimate.approval_status == 'Rejected' %}cancelled{% else %}diagnosis{% endif %}">
+                            Customer: {{ estimate.approval_status }}
+                        </span>
+                    {% endif %}
+                </div>
+                <p style="font-size: 0.85rem; margin-bottom: 1.25rem;">
+                    Submitting an estimate will calculate the total and notify the customer for digital approval.
+                </p>
+
+                <form action="{{ url_for('technician.submit_estimate', booking_id=booking.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="parts_cost" class="form-label">Parts Cost (₹) *</label>
+                            <input type="number" id="parts_cost" name="parts_cost" class="form-control" step="0.01" min="0" value="{{ estimate.parts_cost if estimate else '0' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="labour_cost" class="form-label">Labour Cost (₹) *</label>
+                            <input type="number" id="labour_cost" name="labour_cost" class="form-control" step="0.01" min="0" value="{{ estimate.labour_cost if estimate else '500' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="additional_charges" class="form-label">Additional (₹)</label>
+                            <input type="number" id="additional_charges" name="additional_charges" class="form-control" step="0.01" min="0" value="{{ estimate.additional_charges if estimate else '0' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estimated_completion" class="form-label">Estimated Completion Time</label>
+                        <input type="text" id="estimated_completion" name="estimated_completion" class="form-control" placeholder="e.g. 2 hours after approval / Tomorrow 4 PM" value="{{ estimate.estimated_completion if estimate else '' }}">
+                    </div>
+
+                    {% if estimate %}
+                        <div style="background: var(--bg-surface); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span>Current Total Estimate:</span>
+                            <strong style="font-size: 1.35rem; color: var(--accent-primary);">₹{{ "%.2f"|format(estimate.total_cost) }}</strong>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary">
+                        {% if estimate %}Update & Resubmit Estimate{% else %}Submit Estimate for Customer Approval{% endif %}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Form 3: Status Advancement Console -->
+            <div class="card">
+                <h3 class="card-title">3. Repair Execution & Status</h3>
+                <p style="font-size: 0.85rem; margin-bottom: 1rem;">Once the customer approves the estimate, advance repair milestones.</p>
+
+                {% if booking.status == 'Waiting for Approval' %}
+                    <div class="alert alert-warning">
+                        ⏳ <strong>Awaiting Customer Consent:</strong> Estimate is currently pending review by {{ booking.customer_name }}. Repair cannot proceed until approved.
+                    </div>
+                {% elif booking.status == 'Estimate Rejected' %}
+                    <div class="alert alert-danger">
+                        ✕ <strong>Customer Rejected Estimate:</strong> Review diagnosis or coordinate with customer regarding return without repairs.
+                    </div>
+                {% else %}
+                    <form action="{{ url_for('technician.update_status', booking_id=booking.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="form-group">
+                            <label for="status" class="form-label">Update Status To</label>
+                            <select id="status" name="status" class="form-select" required>
+                                {% if booking.status == 'In Progress' %}
+                                    <option value="Ready for Pickup">Ready for Pickup / Dispatch</option>
+                                    <option value="Unable to Repair">Unable to Repair (Parts unavailable/board dead)</option>
+                                {% elif booking.status in ('Assigned', 'Diagnosis') %}
+                                    <option value="In Progress">In Progress (If approved)</option>
+                                    <option value="Unable to Repair">Unable to Repair</option>
+                                {% else %}
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Ready for Pickup">Ready for Pickup</option>
+                                {% endif %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status_notes" class="form-label">Technician Notes</label>
+                            <input type="text" id="status_notes" name="notes" class="form-control" placeholder="e.g. Display fitted successfully. Multi-touch, camera, and speaker tested 100%.">
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            Save Status Milestone
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Parts Catalog & History -->
+        <div>
+            <!-- Spare Parts Quick Reference -->
+            <div class="card" style="margin-bottom: 1.75rem;">
+                <h3 class="card-title">Inventory Parts in Stock</h3>
+                <p style="font-size: 0.8rem; margin-bottom: 0.75rem;">Reference costs for common parts:</p>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto;">
+                    {% for p in parts %}
+                    <div style="background: var(--bg-surface); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.825rem; display: flex; justify-content: space-between;">
+                        <div>
+                            <strong>{{ p.part_name }}</strong>
+                            <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Stock: {{ p.stock_quantity }}</span>
+                        </div>
+                        <span style="color: var(--accent-primary); font-weight: 700;">₹{{ "%.0f"|format(p.unit_cost) }}</span>
+                    </div>
+                    {% else %}
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">No parts catalog configured.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Activity Audit Trail -->
+            <div class="card">
+                <h3 class="card-title">Status Audit Log</h3>
+                <div class="timeline" style="padding-top: 1rem;">
+                    {% for h in history %}
+                    <div class="timeline-step completed">
+                        <div class="step-marker" style="width: 24px; height: 24px; font-size: 0.7rem;">✓</div>
+                        <div class="step-content">
+                            <div class="step-title" style="font-size: 0.875rem;">{{ h.new_status }}</div>
+                            <p style="font-size: 0.775rem; margin-bottom: 0.15rem; color: var(--text-secondary);">
+                                {{ h.notes or 'Status progression recorded.' }}
+                            </p>
+                            <span class="step-time" style="font-size: 0.7rem;">By {{ h.changed_by_name }} • {{ h.created_at }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Fixify — Smart Mobile Repair Management System | Zero Guesswork{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-glow"></div>
+    <div class="container hero-content">
+        <div class="hero-pill">
+            <span>⚡ Professional Multi-Brand Smartphone Care</span>
+        </div>
+        <h1 class="hero-title">
+            Your Device. Our Expertise. <br>
+            <span class="hero-highlight">Zero Guesswork.</span>
+        </h1>
+        <p class="hero-subtitle">
+            Experience complete transparency from doorstep pickup to precision repair, upfront estimate approval, and secure doorstep return.
+        </p>
+
+        <div class="hero-actions">
+            <a href="{{ url_for('bookings.create') }}" class="btn btn-lg btn-primary">
+                📱 Book a Repair Online
+            </a>
+            <a href="{{ url_for('bookings.track') }}" class="btn btn-lg btn-secondary">
+                🔍 Track Existing Repair
+            </a>
+        </div>
+
+        <!-- Quick Tracking Input Card -->
+        <div class="card" style="max-width: 580px; margin: 0 auto; padding: 1.25rem; text-align: left;">
+            <form action="{{ url_for('bookings.track') }}" method="POST" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="quick_reference" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">
+                        Instant Status Lookup
+                    </label>
+                    <input type="text" id="quick_reference" name="reference" class="form-control" placeholder="Enter Booking Reference (e.g. FIX-XXXXXXXX)" required style="text-transform: uppercase;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: auto; padding: 0.7rem 1.25rem;">
+                    Track
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Live Platform Stats -->
+<section style="background: var(--bg-surface); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 2rem 0;">
+    <div class="container">
+        <div class="stats-grid" style="margin-bottom: 0;">
+            <div class="stat-card">
+                <div class="stat-icon">🛠️</div>
+                <div>
+                    <div class="stat-val">{{ stats.repairs_completed }}</div>
+                    <div class="stat-label">Repairs Completed</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div>
+                    <div class="stat-val">{{ stats.active_repairs }}</div>
+                    <div class="stat-label">Active Repairs In Progress</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div>
+                    <div class="stat-val">{{ stats.avg_rating }} / 5</div>
+                    <div class="stat-label">Average Customer Rating</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🛡️</div>
+                <div>
+                    <div class="stat-val">100%</div>
+                    <div class="stat-label">Estimate Approval Control</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Supported Repair Categories -->
+<section class="container" style="padding: 4.5rem 1.25rem 3rem;">
+    <div style="text-align: center; max-width: 650px; margin: 0 auto 3rem;">
+        <span class="badge badge-booked" style="margin-bottom: 0.5rem;">Comprehensive Solutions</span>
+        <h2>What Can We Fix For You?</h2>
+        <p>From cracked displays and exhausted batteries to micro-soldering and data recovery, our certified technicians handle all issues.</p>
+    </div>
+
+    <div class="features-grid">
+        {% for cat in categories %}
+        <div class="feature-card">
+            <div class="feature-icon">
+                {% if 'Screen' in cat.name %}📱
+                {% elif 'Battery' in cat.name %}🔋
+                {% elif 'Charging' in cat.name %}⚡
+                {% elif 'Camera' in cat.name %}📷
+                {% elif 'Speaker' in cat.name or 'Mic' in cat.name %}🔊
+                {% elif 'Water' in cat.name %}💧
+                {% elif 'Motherboard' in cat.name %}🔌
+                {% else %}🛠️
+                {% endif %}
+            </div>
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">{{ cat.name }}</h3>
+            <p style="font-size: 0.9rem; margin-bottom: 1.25rem;">{{ cat.description }}</p>
+            <a href="{{ url_for('bookings.create') }}" style="font-size: 0.875rem; font-weight: 600;">
+                Book this repair &rarr;
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- How The Fixify Workflow Operates -->
+<section style="background: var(--bg-surface); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 4.5rem 0;">
+    <div class="container">
+        <div style="text-align: center; max-width: 650px; margin: 0 auto 3.5rem;">
+            <span class="badge badge-diagnosis" style="margin-bottom: 0.5rem;">The Lifecycle</span>
+            <h2>How Fixify Works</h2>
+            <p>Every step of the repair journey is tracked digitally with zero guesswork.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+            <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                <div style="width: 50px; height: 50px; background: rgba(14, 165, 233, 0.15); color: var(--accent-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-weight: 800; font-size: 1.25rem;">
+                    1
+                </div>
+                <h4 style="margin-bottom: 0.5rem;">Book Online</h4>
+                <p style="font-size: 0.875rem;">Describe your phone model and problem symptoms. Choose walk-in or convenient doorstep pickup.</p>
+            </div>
+
+            <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                <div style="width: 50px; height: 50px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-weight: 800; font-size: 1.25rem;">
+                    2
+                </div>
+                <h4 style="margin-bottom: 0.5rem;">Diagnose & Approve</h4>
+                <p style="font-size: 0.875rem;">A technician examines your device and submits an itemized parts and labour estimate. You approve or reject with one tap.</p>
+            </div>
+
+            <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                <div style="width: 50px; height: 50px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-weight: 800; font-size: 1.25rem;">
+                    3
+                </div>
+                <h4 style="margin-bottom: 0.5rem;">Precision Repair</h4>
+                <p style="font-size: 0.875rem;">Once approved, genuine parts are fitted, rigorous diagnostics performed, and post-repair quality checks confirmed.</p>
+            </div>
+
+            <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
+                <div style="width: 50px; height: 50px; background: rgba(16, 185, 129, 0.15); color: #34d399; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-weight: 800; font-size: 1.25rem;">
+                    4
+                </div>
+                <h4 style="margin-bottom: 0.5rem;">Deliver & Feedback</h4>
+                <p style="font-size: 0.875rem;">Collect from store or receive safe doorstep delivery. Settle seamlessly and share your review.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Genuine Customer Reviews -->
+<section class="container" style="padding: 4.5rem 1.25rem;">
+    <div style="text-align: center; max-width: 650px; margin: 0 auto 3rem;">
+        <span class="badge badge-completed" style="margin-bottom: 0.5rem;">Verified Customer Feedback</span>
+        <h2>What Our Customers Say</h2>
+        <p>Authentic reviews submitted by verified customers upon repair completion.</p>
+    </div>
+
+    {% if reviews %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            {% for rev in reviews %}
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="color: #f59e0b; font-size: 1.1rem; margin-bottom: 0.65rem;">
+                        {% for i in range(rev.rating) %}★{% endfor %}
+                        {% for i in range(5 - rev.rating) %}☆{% endfor %}
+                    </div>
+                    <p style="font-style: italic; color: var(--text-primary); margin-bottom: 1rem;">
+                        "{{ rev.review_text or 'Excellent service and quick repair turnaround!' }}"
+                    </p>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem; font-size: 0.825rem;">
+                    <div>
+                        <strong style="color: var(--text-primary); display: block;">{{ rev.customer_name }}</strong>
+                        <span style="color: var(--text-muted);">{{ rev.phone_brand }} {{ rev.phone_model }}</span>
+                    </div>
+                    <span style="color: var(--text-muted);">{{ rev.created_at[:10] }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="text-align: center; padding: 3rem 1.5rem; max-width: 600px; margin: 0 auto;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🌟</div>
+            <h3 style="margin-bottom: 0.5rem;">Be the First to Experience Fixify</h3>
+            <p>Our digital repair system is ready. Book your repair today and rate our service upon completion.</p>
+            <a href="{{ url_for('bookings.create') }}" class="btn btn-primary" style="margin-top: 0.5rem;">Book a Repair Now</a>
+        </div>
+    {% endif %}
+</section>
+
+<!-- Frequently Asked Questions -->
+<section style="background: var(--bg-surface); border-top: 1px solid var(--border-color); padding: 4.5rem 0;">
+    <div class="container" style="max-width: 800px;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <span class="badge badge-booked" style="margin-bottom: 0.5rem;">Got Questions?</span>
+            <h2>Frequently Asked Questions</h2>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="card">
+                <h4 style="margin-bottom: 0.4rem;">How long does a typical repair take?</h4>
+                <p style="margin: 0; font-size: 0.9rem;">Screen and battery replacements are typically completed within 2 to 4 hours. Motherboard repairs or water damage treatments take between 24 and 48 hours. Your technician sets an expected completion time during diagnosis.</p>
+            </div>
+            <div class="card">
+                <h4 style="margin-bottom: 0.4rem;">Can I reject an estimate if the repair cost is too high?</h4>
+                <p style="margin: 0; font-size: 0.9rem;">Yes, absolutely. Our zero guesswork guarantee ensures no repair begins without your explicit digital approval. If you reject the estimate, the device is returned without unexpected repair charges.</p>
+            </div>
+            <div class="card">
+                <h4 style="margin-bottom: 0.4rem;">Is my private data safe during repair?</h4>
+                <p style="margin: 0; font-size: 0.9rem;">We strongly recommend backing up your data before handover. Our technicians follow strict privacy protocols and diagnostic testing without accessing personal files or messaging apps.</p>
+            </div>
+            <div class="card">
+                <h4 style="margin-bottom: 0.4rem;">How does doorstep pickup and delivery work?</h4>
+                <p style="margin: 0; font-size: 0.9rem;">When booking, select "Pickup & Delivery" and enter your address. An authorized delivery agent collects your smartphone, hands over a digital acknowledgment, and returns it once repaired.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="container" style="padding: 4rem 1.25rem;">
+    <div class="card" style="background: var(--accent-gradient); color: #ffffff; padding: 3rem 2rem; text-align: center; border: none; box-shadow: var(--shadow-lg);">
+        <h2 style="color: #ffffff; font-size: 2.25rem; margin-bottom: 0.75rem;">Ready to Revive Your Smartphone?</h2>
+        <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; max-width: 600px; margin: 0 auto 1.75rem;">
+            Join thousands who trust Fixify for clear pricing, genuine replacement parts, and zero guesswork.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('bookings.create') }}" class="btn btn-lg" style="background: #ffffff; color: var(--accent-primary); font-weight: 700;">
+                Book Your Repair Today
+            </a>
+            <a href="{{ url_for('bookings.track') }}" class="btn btn-lg btn-outline" style="border-color: #ffffff; color: #ffffff;">
+                Track a Device
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

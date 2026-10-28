@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Leave a Review for Repair {{ booking.reference }} — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; padding: 3rem 1.25rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <span class="badge badge-completed" style="margin-bottom: 0.5rem;">Verified Customer Review</span>
+        <h2>How was your Fixify experience?</h2>
+        <p>Your honest feedback helps us improve technician standards and service delivery.</p>
+    </div>
+
+    <div class="card" style="padding: 2.25rem 2rem;">
+        <div style="background: var(--bg-surface); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.75rem; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Reviewing Service for:</div>
+            <strong style="font-size: 1.1rem; color: var(--text-primary); display: block;">{{ booking.phone_brand }} {{ booking.phone_model }}</strong>
+            <span style="font-size: 0.8rem; color: var(--accent-primary);">Booking Ref: {{ booking.reference }}</span>
+        </div>
+
+        <form action="{{ url_for('reviews.submit', booking_id=booking.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="rating-input" name="rating" value="5">
+
+            <div class="form-group" style="text-align: center; margin-bottom: 1.75rem;">
+                <label class="form-label" style="margin-bottom: 0.75rem;">Your Overall Rating</label>
+                <div class="star-rating-input" style="display: flex; justify-content: center; gap: 0.5rem;">
+                    <button type="button" class="star-btn active" data-value="1" style="background: none; border: none; font-size: 2.5rem; color: #f59e0b; cursor: pointer;">★</button>
+                    <button type="button" class="star-btn active" data-value="2" style="background: none; border: none; font-size: 2.5rem; color: #f59e0b; cursor: pointer;">★</button>
+                    <button type="button" class="star-btn active" data-value="3" style="background: none; border: none; font-size: 2.5rem; color: #f59e0b; cursor: pointer;">★</button>
+                    <button type="button" class="star-btn active" data-value="4" style="background: none; border: none; font-size: 2.5rem; color: #f59e0b; cursor: pointer;">★</button>
+                    <button type="button" class="star-btn active" data-value="5" style="background: none; border: none; font-size: 2.5rem; color: #f59e0b; cursor: pointer;">★</button>
+                </div>
+                <span class="input-help">Tap on a star to set your rating</span>
+            </div>
+
+            <div class="form-group">
+                <label for="review_text" class="form-label">Written Feedback</label>
+                <textarea id="review_text" name="review_text" class="form-control" rows="4" placeholder="How was the diagnostic clarity, repair speed, and communication? Would you recommend Fixify?" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                Submit Verified Review
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

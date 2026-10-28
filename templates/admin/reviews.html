@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Reviews & Ratings — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1250px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Customer Reviews & Quality Ratings</h2>
+            <p>Real verified customer feedback submitted upon repair completion.</p>
+        </div>
+        <div class="card" style="padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Average Rating</span>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #f59e0b;">
+                    ★ {{ "%.1f"|format(stats.avg_rating or 5.0) }} / 5.0
+                </div>
+            </div>
+            <div style="border-left: 1px solid var(--border-color); padding-left: 1.5rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Reviews</span>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">
+                    {{ stats.total_reviews or 0 }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if reviews %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Device</th>
+                            <th>Reference</th>
+                            <th>Rating</th>
+                            <th>Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reviews %}
+                        <tr>
+                            <td>{{ r.created_at[:10] }}</td>
+                            <td><strong>{{ r.customer_name }}</strong></td>
+                            <td>{{ r.phone_brand }} {{ r.phone_model }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.booking_detail', booking_id=r.booking_id) }}" style="font-weight: 600;">
+                                    {{ r.reference }}
+                                </a>
+                            </td>
+                            <td>
+                                <span style="color: #f59e0b; font-size: 1rem;">
+                                    {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5 - r.rating) %}☆{% endfor %}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.9rem;">
+                                {% if r.review_text %}
+                                    "{{ r.review_text }}"
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-style: italic;">No written comments provided.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No customer reviews submitted yet. Reviews are invited upon repair completion.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

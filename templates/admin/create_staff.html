@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Create Staff Account — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 550px; padding: 3rem 1.25rem;">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('admin.users') }}" style="font-size: 0.875rem;">&larr; Back to Staff Directory</a>
+        <h2 style="margin-top: 0.25rem;">Add New Staff Member</h2>
+        <p>Register certified technicians, delivery logistics personnel, or fellow administrators.</p>
+    </div>
+
+    <div class="card" style="padding: 2.25rem 2rem;">
+        <form action="{{ url_for('admin.create_staff') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label for="role" class="form-label">Assign Operational Role *</label>
+                <select id="role" name="role" class="form-select" required>
+                    <option value="technician">Technician (Diagnostic & Repairs)</option>
+                    <option value="delivery">Delivery Staff (Pickup & Delivery Logistics)</option>
+                    <option value="admin">System Administrator</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="full_name" class="form-label">Full Name *</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" placeholder="e.g. Anand Kumar" required minlength="2">
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">Work Email *</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="staff@fixify.demo" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mobile" class="form-label">Contact Mobile Number *</label>
+                <input type="tel" id="mobile" name="mobile" class="form-control" placeholder="9876543210" pattern="[6-9][0-9]{9}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Temporary Password *</label>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required minlength="8">
+                    <button type="button" class="input-toggle-btn password-toggle-btn" data-target="password">Show</button>
+                </div>
+                <span class="input-help">At least 8 characters. Staff can update upon first login.</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Create Staff Account
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

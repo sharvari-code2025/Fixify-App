@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Assigned Repairs — Technician — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1350px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>Assigned Repairs History</h2>
+            <p>Archive of all current and historical smartphone assignments.</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <form action="{{ url_for('technician.repairs') }}" method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 220px;">
+                <input type="text" name="q" class="form-control" placeholder="Search reference, customer, or model..." value="{{ search or '' }}">
+            </div>
+            <div style="flex: 1; min-width: 160px;">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Assigned" {% if current_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                    <option value="Diagnosis" {% if current_status == 'Diagnosis' %}selected{% endif %}>Diagnosis</option>
+                    <option value="Waiting for Approval" {% if current_status == 'Waiting for Approval' %}selected{% endif %}>Waiting for Approval</option>
+                    <option value="In Progress" {% if current_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                    <option value="Ready for Pickup" {% if current_status == 'Ready for Pickup' %}selected{% endif %}>Ready for Pickup</option>
+                    <option value="Completed" {% if current_status == 'Completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            {% if search or current_status %}
+                <a href="{{ url_for('technician.repairs') }}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card">
+        {% if repairs %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Device</th>
+                            <th>Issue Category</th>
+                            <th>Status</th>
+                            <th>Estimate</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in repairs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('technician.repair_detail', booking_id=r.id) }}" style="font-weight: 700;">
+                                    {{ r.reference }}
+                                </a>
+                            </td>
+                            <td>{{ r.customer_name }}</td>
+                            <td>{{ r.phone_brand }} {{ r.phone_model }}</td>
+                            <td>{{ r.category_name or 'General' }}</td>
+                            <td>
+                                <span class="badge badge-{{ r.status.lower().replace(' ', '-') }}">
+                                    {{ r.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if r.total_cost %}
+                                    <strong>₹{{ "%.2f"|format(r.total_cost) }}</strong>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('technician.repair_detail', booking_id=r.id) }}" class="btn btn-sm btn-secondary">
+                                    Work Console
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No repairs found matching the filter criteria.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

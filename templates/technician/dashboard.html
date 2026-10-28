@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Technician Workbench — Fixify{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1350px; padding: 2.5rem 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span class="badge badge-role-technician" style="margin-bottom: 0.4rem;">Certified Repair Specialist</span>
+            <h2>Technician Workbench</h2>
+            <p>Diagnose hardware issues, calculate itemized estimates, and record repair milestones.</p>
+        </div>
+    </div>
+
+    <!-- Technician Workload Metrics Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">🔧</div>
+            <div>
+                <div class="stat-val">{{ total_assigned }}</div>
+                <div class="stat-label">Assigned Repairs</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.15);">🔍</div>
+            <div>
+                <div class="stat-val" style="color: #fbbf24;">{{ pending_diagnosis }}</div>
+                <div class="stat-label">Awaiting Diagnosis</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #0ea5e9; background: rgba(14, 165, 233, 0.15);">⏳</div>
+            <div>
+                <div class="stat-val" style="color: #38bdf8;">{{ awaiting_approval }}</div>
+                <div class="stat-label">Awaiting Approval</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #a855f7; background: rgba(168, 85, 247, 0.15);">⚙️</div>
+            <div>
+                <div class="stat-val" style="color: #c084fc;">{{ in_progress }}</div>
+                <div class="stat-label">Active on Bench</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);">✅</div>
+            <div>
+                <div class="stat-val" style="color: #34d399;">{{ completed }}</div>
+                <div class="stat-label">Completed Repairs</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Tasks Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Assigned Device Queue</h3>
+            <a href="{{ url_for('technician.repairs') }}" class="btn btn-sm btn-secondary">View Complete History &rarr;</a>
+        </div>
+
+        {% if repairs %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Device</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Estimate Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in repairs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('technician.repair_detail', booking_id=r.id) }}" style="font-weight: 700;">
+                                    {{ r.reference }}
+                                </a>
+                            </td>
+                            <td>{{ r.customer_name }}</td>
+                            <td>{{ r.customer_mobile }}</td>
+                            <td><strong>{{ r.phone_brand }} {{ r.phone_model }}</strong></td>
+                            <td>{{ r.category_name or 'General' }}</td>
+                            <td>
+                                <span class="badge badge-{{ r.status.lower().replace(' ', '-') }}">
+                                    {{ r.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if r.total_cost %}
+                                    <span class="badge badge-{% if r.estimate_status == 'Approved' %}completed{% elif r.estimate_status == 'Rejected' %}cancelled{% else %}diagnosis{% endif %}">
+                                        ₹{{ "%.0f"|format(r.total_cost) }} ({{ r.estimate_status }})
+                                    </span>
+                                {% else %}
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">Not estimated</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('technician.repair_detail', booking_id=r.id) }}" class="btn btn-sm btn-primary">
+                                    Work Bench
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p>No active repairs currently in your queue.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

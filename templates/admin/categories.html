@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Repair Categories — Admin — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 950px; padding: 2.5rem 1.25rem;">
+    <div style="margin-bottom: 2rem;">
+        <h2>Repair Categories Directory</h2>
+        <p>Define smartphone problem categories available to customers during the booking workflow.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+        <!-- Add New Category Form -->
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: 1.25rem;">Add Category</h3>
+            <form action="{{ url_for('admin.categories') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="add">
+
+                <div class="form-group">
+                    <label for="name" class="form-label">Category Name *</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Face ID Sensor Repair" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Explain what issues fall under this category..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Save Category
+                </button>
+            </form>
+        </div>
+
+        <!-- Categories Table -->
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: 1.25rem;">Configured Categories</h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr>
+                            <td><strong>{{ c.name }}</strong></td>
+                            <td style="font-size: 0.85rem; color: var(--text-secondary);">{{ c.description }}</td>
+                            <td>
+                                {% if c.is_active == 1 %}
+                                    <span class="badge badge-completed">Active</span>
+                                {% else %}
+                                    <span class="badge badge-cancelled">Disabled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{{ url_for('admin.categories') }}" method="POST" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="action" value="toggle">
+                                    <input type="hidden" name="category_id" value="{{ c.id }}">
+                                    <button type="submit" class="btn btn-sm {% if c.is_active == 1 %}btn-danger{% else %}btn-success{% endif %}">
+                                        {% if c.is_active == 1 %}Disable{% else %}Enable{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

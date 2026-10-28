@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}500 Internal Error — Fixify{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 600px; padding: 5rem 1.25rem; text-align: center;">
+    <div class="card" style="padding: 3rem 2rem;">
+        <div style="font-size: 3.5rem; margin-bottom: 1rem;">⚙️</div>
+        <h2 style="margin-bottom: 0.5rem;">500 — Internal Server Error</h2>
+        <p>Something unexpected occurred while processing your request. Our engineering team has been notified.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 1rem;">Return to Safety</a>
+    </div>
+</div>
+{% endblock %}

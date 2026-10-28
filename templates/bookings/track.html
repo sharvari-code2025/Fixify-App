@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Track Repair Status — Fixify{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; padding: 3rem 1.25rem;">
+    <!-- Lookup Search Header -->
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+        <span class="badge badge-booked" style="margin-bottom: 0.5rem;">Live Repair Tracker</span>
+        <h2>Track Your Device Status</h2>
+        <p>Instant transparency into technician diagnosis, estimate approval, and delivery progress.</p>
+
+        <div class="card" style="max-width: 600px; margin: 1.5rem auto 0; padding: 1.25rem;">
+            <form action="{{ url_for('bookings.track') }}" method="POST" style="display: flex; gap: 0.75rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="reference" class="form-control" value="{{ reference or '' }}" placeholder="Enter Reference Code (e.g. FIX-XXXXXXXX)" required style="text-transform: uppercase; font-size: 1rem; letter-spacing: 1px;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.5rem;">
+                    Track
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if booking %}
+        <!-- Active Tracking Summary Card -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Booking Reference</span>
+                    <h3 style="margin: 0; color: var(--accent-primary); letter-spacing: 1px;">{{ booking.reference }}</h3>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Current Status</span>
+                    <span class="badge badge-{{ booking.status.lower().replace(' ', '-') }}" style="font-size: 0.9rem; padding: 0.4rem 0.85rem;">
+                        {{ booking.status }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Device & Service Summary Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Device</span>
+                    <strong style="color: var(--text-primary); font-size: 1.05rem;">{{ booking.phone_brand }} {{ booking.phone_model }}</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Reported Problem</span>
+                    <strong style="color: var(--text-primary);">{{ booking.category_name or 'General Repair' }}</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Service Method</span>
+                    <strong style="color: var(--text-primary);">{{ booking.service_type.replace('_', ' ') | title }}</strong>
+                </div>
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Assigned Technician</span>
+                    <strong style="color: var(--text-primary);">{{ booking.technician_name or 'Pending Assignment' }}</strong>
+                </div>
+            </div>
+
+            <!-- Visual Stage Stepper -->
+            <div style="background: var(--bg-surface); border-radius: var(--radius-md); padding: 1.5rem 1rem; border: 1px solid var(--border-subtle); margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                    <!-- Step 1: Booked -->
+                    <div style="text-align: center; flex: 1;">
+                        <div class="step-marker" style="margin: 0 auto 0.5rem; {% if booking.status in ('Booked', 'Assigned', 'Diagnosis', 'Waiting for Approval', 'In Progress', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'Completed') %}background: #10b981; border-color: #10b981; color: #fff;{% endif %}">✓</div>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Booked</span>
+                    </div>
+
+                    <!-- Step 2: Diagnosis -->
+                    <div style="text-align: center; flex: 1;">
+                        <div class="step-marker" style="margin: 0 auto 0.5rem; {% if booking.status in ('Diagnosis', 'Waiting for Approval', 'In Progress', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'Completed') %}background: #10b981; border-color: #10b981; color: #fff;{% elif booking.status == 'Assigned' %}background: var(--accent-primary); border-color: var(--accent-primary); color: #fff;{% endif %}">2</div>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Diagnosis</span>
+                    </div>
+
+                    <!-- Step 3: Approval -->
+                    <div style="text-align: center; flex: 1;">
+                        <div class="step-marker" style="margin: 0 auto 0.5rem; {% if booking.status in ('In Progress', 'Ready for Pickup', 'Out for Delivery', 'Delivered', 'Completed') %}background: #10b981; border-color: #10b981; color: #fff;{% elif booking.status == 'Waiting for Approval' %}background: #f59e0b; border-color: #f59e0b; color: #fff;{% endif %}">3</div>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Approval</span>
+                    </div>
+
+                    <!-- Step 4: Repair -->
+                    <div style="text-align: center; flex: 1;">
+                        <div class="step-marker" style="margin: 0 auto 0.5rem; {% if booking.status in ('Ready for Pickup', 'Out for Delivery', 'Delivered', 'Completed') %}background: #10b981; border-color: #10b981; color: #fff;{% elif booking.status == 'In Progress' %}background: #a855f7; border-color: #a855f7; color: #fff;{% endif %}">4</div>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Repairing</span>
+                    </div>
+
+                    <!-- Step 5: Completed -->
+                    <div style="text-align: center; flex: 1;">
+                        <div class="step-marker" style="margin: 0 auto 0.5rem; {% if booking.status in ('Delivered', 'Completed') %}background: #10b981; border-color: #10b981; color: #fff;{% endif %}">5</div>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Ready / Done</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <!-- Diagnosis & Estimate Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 1rem;">🔧 Technician Findings</h3>
+                {% if diagnosis %}
+                    <div style="margin-bottom: 1rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Diagnosis Report:</span>
+                        <p style="color: var(--text-primary); font-size: 0.925rem; margin-top: 0.25rem;">{{ diagnosis.diagnosis_text }}</p>
+                    </div>
+                    {% if diagnosis.recommended_repair %}
+                    <div style="margin-bottom: 1rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Recommended Solution:</span>
+                        <p style="color: var(--text-primary); font-size: 0.925rem; margin-top: 0.25rem;">{{ diagnosis.recommended_repair }}</p>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p style="font-size: 0.9rem; color: var(--text-muted); font-style: italic;">
+                        Device inspection has not been initiated yet. Our technician will upload diagnostic findings shortly.
+                    </p>
+                {% endif %}
+
+                {% if estimate %}
+                    <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600;">Total Estimate:</span>
+                            <strong style="font-size: 1.35rem; color: var(--accent-primary);">₹{{ "%.2f"|format(estimate.total_cost) }}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            <span>Parts: ₹{{ "%.2f"|format(estimate.parts_cost) }} • Labour: ₹{{ "%.2f"|format(estimate.labour_cost) }}</span>
+                            <span class="badge badge-{% if estimate.approval_status == 'Approved' %}completed{% elif estimate.approval_status == 'Rejected' %}cancelled{% else %}diagnosis{% endif %}">
+                                {{ estimate.approval_status }}
+                            </span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Status Timeline Audit Trail -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 1rem;">📜 Activity Timeline</h3>
+                <div class="timeline">
+                    {% for h in history %}
+                    <div class="timeline-step completed">
+                        <div class="step-marker" style="width: 28px; height: 28px; font-size: 0.75rem;">✓</div>
+                        <div class="step-content">
+                            <div class="step-title" style="font-size: 0.925rem;">{{ h.new_status }}</div>
+                            <p style="font-size: 0.825rem; margin-bottom: 0.2rem; color: var(--text-secondary);">
+                                {{ h.notes or 'Status progression recorded.' }}
+                            </p>
+                            <span class="step-time">{{ h.created_at }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if session.get('user_id') and session.get('user_role') == 'customer' and booking.customer_id == session.get('user_id') %}
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <a href="{{ url_for('customer.booking_detail', booking_id=booking.id) }}" class="btn btn-primary">
+                    Open in Customer Management Console &rarr;
+                </a>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
