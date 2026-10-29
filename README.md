@@ -64,7 +64,7 @@ Fixify provides a centralized, authenticated platform where:
 
 - **Backend**: Python 3.10+ with Flask (Modular Application Factory & Blueprints).
 - **Authentication & Security**: Werkzeug `scrypt` hashing, pyotp (RFC 6238 TOTP), Google OAuth 2.0 API, session CSRF validation.
-- **Database**: SQLite 3 with WAL mode, foreign key enforcement (`PRAGMA foreign_keys = ON`), parameterized queries, and transactional rollbacks.
+- **Database**: SQLite 8 with WAL mode, foreign key enforcement (`PRAGMA foreign_keys = ON`), parameterized queries, and transactional rollbacks.
 - **Frontend**: Semantic HTML5, Jinja2 templating, and Vanilla CSS3 with custom properties (CSS design tokens).
 - **Theme**: Instant Dark Mode (default) and Light Mode toggle persisted in `localStorage`.
 - **Data Visualization**: Chart.js loaded for dynamic administrative workload and status charts.
